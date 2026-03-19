@@ -1,8 +1,8 @@
 {
   "name": "tab-manager",
   "displayName": "Tab Manager - 标签页管理器",
-  "description": "类似IDEA的标签页管理器，可以快速查看和关闭已打开的标签页，支持批量关闭、多选操作",
-  "version": "1.0.0",
+  "description": "类似IDEA的标签页管理器，可以快速查看和关闭已打开的标签页，支持批量关闭、多选操作，显示文件类型图标",
+  "version": "2.0.0",
   "publisher": "your-publisher-name",
   "engines": {
     "vscode": "^1.85.0"

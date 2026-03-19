@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { FileIconMapper } from './fileIconMapper';
 
 /**
  * QuickPick项接口，用于显示标签页信息
@@ -45,6 +46,9 @@ export class TabManager {
                     const dirPath = path.dirname(uri.fsPath);
                     const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
                     
+                    // 获取文件图标
+                    const fileIcon = FileIconMapper.getFileIcon(uri.fsPath);
+                    
                     // 构建显示标签
                     let label = fileName;
                     let description = '';
@@ -75,6 +79,7 @@ export class TabManager {
                         label: label,
                         description: description,
                         detail: showPath ? filePath : undefined,
+                        iconPath: fileIcon,
                         tab: tab,
                         index: tabIndex,
                         picked: isActive,

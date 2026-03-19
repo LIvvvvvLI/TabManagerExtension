@@ -1,0 +1,122 @@
+name: Build Extension Artifact
+
+on:
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create a draft release with the extension'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  build:
+    name: Build VSIX Extension
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile TypeScript
+        run: npm run compile
+
+      - name: Run linting
+        run: npm run lint
+        continue-on-error: true
+
+      - name: Install vsce
+        run: npm install -g @vscode/vsce
+
+      - name: Get version info
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          NAME=$(node -p "require('./package.json').name")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "name=$NAME" >> $GITHUB_OUTPUT
+          echo "Extension: $NAME v$VERSION"
+
+      - name: Package extension
+        run: |
+          vsce package --allow-star-activation
+          echo "Extension packaged successfully!"
+          ls -la *.vsix
+
+      - name: Rename VSIX with version
+        run: |
+          VSIX_FILE=$(ls *.vsix | head -n 1)
+          NEW_NAME="${{ steps.version.outputs.name }}-${{ steps.version.outputs.version }}.vsix"
+          if [ "$VSIX_FILE" != "$NEW_NAME" ]; then
+            mv "$VSIX_FILE" "$NEW_NAME"
+          fi
+          echo "Final package: $NEW_NAME"
+
+      - name: Upload VSIX artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tab-manager-extension
+          path: '*.vsix'
+          retention-days: 30
+          compression-level: 0
+
+      - name: Generate build summary
+        run: |
+          VSIX_FILE=$(ls *.vsix | head -n 1)
+          FILE_SIZE=$(du -h "$VSIX_FILE" | cut -f1)
+          
+          echo "## Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Item | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Extension | ${{ steps.version.outputs.name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | v${{ steps.version.outputs.version }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| File | $VSIX_FILE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Size | $FILE_SIZE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Node.js | 20.x |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Download Instructions" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "1. Scroll to the **Artifacts** section at the bottom of this page" >> $GITHUB_STEP_SUMMARY
+          echo "2. Click on **tab-manager-extension** to download the ZIP file" >> $GITHUB_STEP_SUMMARY
+          echo "3. Extract the .vsix file from the ZIP" >> $GITHUB_STEP_SUMMARY
+          echo "4. In VSCode, press Ctrl/Cmd + Shift + P" >> $GITHUB_STEP_SUMMARY
+          echo "5. Type **Install from VSIX** and select the command" >> $GITHUB_STEP_SUMMARY
+          echo "6. Choose the downloaded .vsix file" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Quick Install via Command Line" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "code --install-extension $VSIX_FILE" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Create draft release (optional)
+        if: github.event.inputs.create_release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}-build-${{ github.run_number }}
+          name: Build v${{ steps.version.outputs.version }} #${{ github.run_number }}
+          body: |
+            ## Tab Manager Extension Build
+            
+            This is an automated build from commit ${{ github.sha }}
+            
+            ### Installation
+            1. Download the .vsix file below
+            2. In VSCode, press Ctrl/Cmd + Shift + P
+            3. Type "Install from VSIX"
+            4. Select the downloaded file
+          draft: true
+          prerelease: true
+          files: '*.vsix'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

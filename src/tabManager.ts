@@ -6,7 +6,6 @@ import * as path from 'path';
  */
 export interface TabQuickPickItem extends vscode.QuickPickItem {
     tab: vscode.Tab;
-    tabGroup: vscode.TabGroup;
     index: number;
 }
 
@@ -46,9 +45,6 @@ export class TabManager {
                     const dirPath = path.dirname(uri.fsPath);
                     const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
                     
-                    // 获取文件图标
-                    const fileExtension = path.extname(uri.fsPath).toLowerCase();
-                    
                     // 构建显示标签
                     let label = fileName;
                     let description = '';
@@ -80,7 +76,6 @@ export class TabManager {
                         description: description,
                         detail: showPath ? filePath : undefined,
                         tab: tab,
-                        tabGroup: group,
                         index: tabIndex,
                         picked: isActive,
                         buttons: [
@@ -167,7 +162,8 @@ export class TabManager {
                     return;
                 }
             }
-            await item.tabGroup.close(item.tab);
+            // 使用 vscode.window.tabGroups.close() 关闭标签页
+            await vscode.window.tabGroups.close(item.tab);
         } catch (error) {
             console.error('关闭标签页失败:', error);
         }
@@ -207,7 +203,8 @@ export class TabManager {
                     (item.tab.input as vscode.TabInputText).uri.fsPath
                 );
                 if (currentTab) {
-                    await currentTab.tabGroup.close(currentTab.tab);
+                    // 使用 vscode.window.tabGroups.close() 关闭标签页
+                    await vscode.window.tabGroups.close(currentTab.tab);
                     closedCount++;
                 }
             } catch (error) {

@@ -97,25 +97,3 @@ jobs:
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo "code --install-extension $VSIX_FILE" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
-
-      - name: Create draft release (optional)
-        if: github.event.inputs.create_release == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: v${{ steps.version.outputs.version }}-build-${{ github.run_number }}
-          name: Build v${{ steps.version.outputs.version }} #${{ github.run_number }}
-          body: |
-            ## Tab Manager Extension Build
-            
-            This is an automated build from commit ${{ github.sha }}
-            
-            ### Installation
-            1. Download the .vsix file below
-            2. In VSCode, press Ctrl/Cmd + Shift + P
-            3. Type "Install from VSIX"
-            4. Select the downloaded file
-          draft: true
-          prerelease: true
-          files: '*.vsix'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

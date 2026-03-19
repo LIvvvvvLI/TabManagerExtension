@@ -4,156 +4,165 @@ import * as path from 'path';
 /**
  * 文件图标映射器
  * 根据文件扩展名返回对应的 VSCode ThemeIcon
+ * 
+ * 优先使用 ThemeIcon.File API（VSCode 1.92+）获取真实的文件图标
+ * 对于旧版本，使用 Codicon 图标作为后备方案
  */
 export class FileIconMapper {
     
     /**
-     * 语言ID到图标的映射
+     * 检查 ThemeIcon.File API 是否可用
      */
-    private static readonly languageIconMap: Map<string, string> = new Map([
-        // JavaScript/TypeScript
-        ['javascript', 'symbol-method'],
-        ['typescript', 'symbol-method'],
-        ['javascriptreact', 'symbol-method'],
-        ['typescriptreact', 'symbol-method'],
-        ['json', 'json'],
-        ['jsonc', 'json'],
-        
-        // Web
-        ['html', 'symbol-file'],
-        ['css', 'symbol-color'],
-        ['scss', 'symbol-color'],
-        ['less', 'symbol-color'],
-        ['vue', 'symbol-method'],
-        ['svelte', 'symbol-method'],
-        
-        // Backend
-        ['python', 'symbol-method'],
-        ['java', 'symbol-method'],
-        ['c', 'symbol-method'],
-        ['cpp', 'symbol-method'],
-        ['csharp', 'symbol-method'],
-        ['go', 'symbol-method'],
-        ['rust', 'symbol-method'],
-        ['php', 'symbol-method'],
-        ['ruby', 'symbol-method'],
-        
-        // Config/Data
-        ['yaml', 'settings-gear'],
-        ['xml', 'symbol-file'],
-        ['toml', 'settings-gear'],
-        ['ini', 'settings-gear'],
-        ['env', 'settings-gear'],
-        
-        // Documentation
-        ['markdown', 'book'],
-        ['md', 'book'],
-        
-        // Shell
-        ['shellscript', 'terminal'],
-        ['powershell', 'terminal'],
-        ['bash', 'terminal'],
-        
-        // Database
-        ['sql', 'database'],
-        ['mysql', 'database'],
-        ['pgsql', 'database'],
-        
-        // Other
-        ['dockerfile', 'package'],
-        ['dockercompose', 'package'],
-        ['makefile', 'gear'],
-        ['cmake', 'gear'],
-    ]);
+    private static hasFileIconApi(): boolean {
+        return typeof (vscode.ThemeIcon as any).File === 'function';
+    }
 
     /**
-     * 文件扩展名到图标的映射
+     * 文件扩展名到 Codicon 图标的映射（后备方案）
      */
     private static readonly extensionIconMap: Map<string, string> = new Map([
         // JavaScript/TypeScript
         ['.js', 'symbol-method'],
+        ['.mjs', 'symbol-method'],
+        ['.cjs', 'symbol-method'],
         ['.jsx', 'symbol-method'],
         ['.ts', 'symbol-method'],
         ['.tsx', 'symbol-method'],
-        ['.mjs', 'symbol-method'],
-        ['.cjs', 'symbol-method'],
-        ['.json', 'json'],
+        ['.mts', 'symbol-method'],
+        ['.cts', 'symbol-method'],
         
-        // Web
-        ['.html', 'symbol-file'],
-        ['.htm', 'symbol-file'],
+        // JSON
+        ['.json', 'json'],
+        ['.jsonc', 'json'],
+        ['.json5', 'json'],
+        
+        // HTML
+        ['.html', 'file-code'],
+        ['.htm', 'file-code'],
+        ['.xhtml', 'file-code'],
+        
+        // CSS/Style
         ['.css', 'symbol-color'],
         ['.scss', 'symbol-color'],
         ['.sass', 'symbol-color'],
         ['.less', 'symbol-color'],
+        ['.styl', 'symbol-color'],
+        
+        // Vue/Svelte/Astro
         ['.vue', 'symbol-method'],
         ['.svelte', 'symbol-method'],
+        ['.astro', 'symbol-method'],
         
-        // Backend Languages
+        // Python
         ['.py', 'symbol-method'],
         ['.pyw', 'symbol-method'],
+        ['.pyi', 'symbol-method'],
+        ['.pyx', 'symbol-method'],
+        
+        // Java
         ['.java', 'symbol-method'],
+        ['.class', 'file-binary'],
+        
+        // Kotlin
+        ['.kt', 'symbol-method'],
+        ['.kts', 'symbol-method'],
+        
+        // Scala
+        ['.scala', 'symbol-method'],
+        ['.sc', 'symbol-method'],
+        
+        // Groovy
+        ['.groovy', 'symbol-method'],
+        
+        // C/C++
         ['.c', 'symbol-method'],
         ['.cpp', 'symbol-method'],
         ['.cc', 'symbol-method'],
         ['.cxx', 'symbol-method'],
         ['.h', 'symbol-method'],
         ['.hpp', 'symbol-method'],
+        ['.hxx', 'symbol-method'],
+        
+        // C#
         ['.cs', 'symbol-method'],
+        
+        // Go
         ['.go', 'symbol-method'],
+        
+        // Rust
         ['.rs', 'symbol-method'],
+        
+        // PHP
         ['.php', 'symbol-method'],
+        ['.phtml', 'symbol-method'],
+        
+        // Ruby
         ['.rb', 'symbol-method'],
+        ['.rake', 'symbol-method'],
+        
+        // Swift
         ['.swift', 'symbol-method'],
-        ['.kt', 'symbol-method'],
-        ['.scala', 'symbol-method'],
+        
+        // Objective-C
+        ['.m', 'symbol-method'],
+        ['.mm', 'symbol-method'],
+        
+        // Other Languages
         ['.lua', 'symbol-method'],
         ['.r', 'symbol-method'],
         ['.jl', 'symbol-method'],
+        ['.ex', 'symbol-method'],
+        ['.exs', 'symbol-method'],
+        ['.erl', 'symbol-method'],
+        ['.hrl', 'symbol-method'],
+        ['.hs', 'symbol-method'],
+        ['.ml', 'symbol-method'],
+        ['.mli', 'symbol-method'],
+        ['.fs', 'symbol-method'],
+        ['.fsi', 'symbol-method'],
+        ['.fsx', 'symbol-method'],
+        ['.clj', 'symbol-method'],
+        ['.cljs', 'symbol-method'],
+        ['.dart', 'symbol-method'],
+        ['.vim', 'symbol-method'],
         
-        // Config Files
+        // Shell scripts
+        ['.sh', 'terminal'],
+        ['.bash', 'terminal'],
+        ['.zsh', 'terminal'],
+        ['.bat', 'terminal'],
+        ['.cmd', 'terminal'],
+        ['.ps1', 'terminal'],
+        ['.psm1', 'terminal'],
+        ['.psd1', 'terminal'],
+        
+        // Config files
         ['.yaml', 'settings-gear'],
         ['.yml', 'settings-gear'],
-        ['.xml', 'symbol-file'],
+        ['.xml', 'file-code'],
         ['.toml', 'settings-gear'],
         ['.ini', 'settings-gear'],
         ['.conf', 'settings-gear'],
         ['.config', 'settings-gear'],
-        ['.env', 'settings-gear'],
-        ['.editorconfig', 'settings-gear'],
-        ['.prettierrc', 'settings-gear'],
-        ['.eslintrc', 'settings-gear'],
+        ['.cfg', 'settings-gear'],
+        ['.properties', 'settings-gear'],
+        
+        // Database
+        ['.sql', 'database'],
+        ['.db', 'database'],
+        ['.sqlite', 'database'],
+        ['.sqlite3', 'database'],
+        ['.prisma', 'database'],
         
         // Documentation
         ['.md', 'book'],
         ['.markdown', 'book'],
         ['.mdx', 'book'],
         ['.rst', 'book'],
-        ['.txt', 'symbol-file'],
+        ['.txt', 'file-text'],
+        
+        // Documents
         ['.pdf', 'file-pdf'],
-        ['.doc', 'file-pdf'],
-        ['.docx', 'file-pdf'],
-        
-        // Shell/Scripts
-        ['.sh', 'terminal'],
-        ['.bash', 'terminal'],
-        ['.zsh', 'terminal'],
-        ['.ps1', 'terminal'],
-        ['.bat', 'terminal'],
-        ['.cmd', 'terminal'],
-        
-        // Database
-        ['.sql', 'database'],
-        ['.db', 'database'],
-        ['.sqlite', 'database'],
-        ['.prisma', 'database'],
-        
-        // Build/Package
-        ['.dockerfile', 'package'],
-        ['.makefile', 'gear'],
-        ['.cmake', 'gear'],
-        ['.gradle', 'gear'],
-        ['.maven', 'gear'],
         
         // Images
         ['.png', 'file-media'],
@@ -164,14 +173,20 @@ export class FileIconMapper {
         ['.ico', 'file-media'],
         ['.webp', 'file-media'],
         ['.bmp', 'file-media'],
+        ['.tiff', 'file-media'],
         
-        // Audio/Video
+        // Audio
         ['.mp3', 'file-media'],
-        ['.mp4', 'file-media'],
         ['.wav', 'file-media'],
+        ['.ogg', 'file-media'],
+        ['.flac', 'file-media'],
+        
+        // Video
+        ['.mp4', 'file-media'],
         ['.avi', 'file-media'],
         ['.mov', 'file-media'],
         ['.mkv', 'file-media'],
+        ['.webm', 'file-media'],
         
         // Archives
         ['.zip', 'file-zip'],
@@ -180,23 +195,34 @@ export class FileIconMapper {
         ['.rar', 'file-zip'],
         ['.7z', 'file-zip'],
         
-        // Styles/Design
-        ['.sketch', 'symbol-color'],
-        ['.fig', 'symbol-color'],
-        ['.xd', 'symbol-color'],
-        
         // Lock files
         ['.lock', 'lock'],
         ['.sum', 'lock'],
         
-        // Git
-        ['.gitignore', 'git-pull-request'],
-        ['.gitattributes', 'git-pull-request'],
-        ['.gitmodules', 'git-pull-request'],
+        // Certificate/Key
+        ['.pem', 'key'],
+        ['.crt', 'key'],
+        ['.key', 'key'],
+        ['.pub', 'key'],
         
-        // License
-        ['.license', 'law'],
-        ['.lic', 'law'],
+        // Log files
+        ['.log', 'output'],
+        
+        // Binary
+        ['.bin', 'file-binary'],
+        ['.dll', 'file-binary'],
+        ['.so', 'file-binary'],
+        ['.exe', 'file-binary'],
+        
+        // GraphQL
+        ['.graphql', 'symbol-method'],
+        ['.gql', 'symbol-method'],
+        
+        // Other
+        ['.csv', 'table'],
+        ['.tsv', 'table'],
+        ['.diff', 'diff'],
+        ['.patch', 'diff'],
     ]);
 
     /**
@@ -208,73 +234,44 @@ export class FileIconMapper {
         ['package-lock.json', 'lock'],
         ['yarn.lock', 'lock'],
         ['pnpm-lock.yaml', 'lock'],
-        ['bun.lock', 'lock'],
-        ['bun.lockb', 'lock'],
         
-        // Config files
+        // TypeScript config
         ['tsconfig.json', 'settings-gear'],
         ['jsconfig.json', 'settings-gear'],
-        ['.eslintrc', 'symbol-color'],
-        ['.eslintrc.js', 'symbol-color'],
-        ['.eslintrc.json', 'symbol-color'],
-        ['.eslintrc.yaml', 'symbol-color'],
-        ['.eslintrc.yml', 'symbol-color'],
-        ['.prettierrc', 'symbol-color'],
-        ['.prettierrc.js', 'symbol-color'],
-        ['.prettierrc.json', 'symbol-color'],
-        ['.prettierrc.yaml', 'symbol-color'],
-        ['prettier.config.js', 'symbol-color'],
         
         // Build tools
         ['webpack.config.js', 'gear'],
-        ['webpack.config.ts', 'gear'],
         ['vite.config.js', 'gear'],
         ['vite.config.ts', 'gear'],
         ['rollup.config.js', 'gear'],
-        ['rollup.config.ts', 'gear'],
         ['gulpfile.js', 'gear'],
-        ['gulpfile.ts', 'gear'],
         ['gruntfile.js', 'gear'],
         
         // Docker
-        ['dockerfile', 'package'],
-        ['Dockerfile', 'package'],
-        ['docker-compose.yml', 'package'],
-        ['docker-compose.yaml', 'package'],
-        ['docker-compose.override.yml', 'package'],
-        ['.dockerignore', 'package'],
-        
-        // CI/CD
-        ['.travis.yml', 'gear'],
-        ['.gitlab-ci.yml', 'gear'],
-        ['azure-pipelines.yml', 'gear'],
-        ['Jenkinsfile', 'gear'],
+        ['dockerfile', 'docker'],
+        ['Dockerfile', 'docker'],
+        ['docker-compose.yml', 'docker'],
+        ['docker-compose.yaml', 'docker'],
+        ['.dockerignore', 'docker'],
         
         // Git
         ['.gitignore', 'git-pull-request'],
         ['.gitattributes', 'git-pull-request'],
         ['.gitmodules', 'git-pull-request'],
-        ['.gitkeep', 'git-pull-request'],
-        
-        // Editor
-        ['.editorconfig', 'settings-gear'],
-        ['.vscode', 'settings-gear'],
         
         // Documentation
         ['readme.md', 'book'],
         ['README.md', 'book'],
-        ['readme', 'book'],
-        ['README', 'book'],
         ['changelog.md', 'book'],
         ['CHANGELOG.md', 'book'],
         ['contributing.md', 'book'],
         ['CONTRIBUTING.md', 'book'],
+        
+        // License
         ['license', 'law'],
         ['LICENSE', 'law'],
         ['license.md', 'law'],
         ['LICENSE.md', 'law'],
-        ['license.txt', 'law'],
-        ['LICENSE.txt', 'law'],
         
         // Environment
         ['.env', 'settings-gear'],
@@ -287,41 +284,68 @@ export class FileIconMapper {
         // Make
         ['makefile', 'gear'],
         ['Makefile', 'gear'],
-        ['CMakeLists.txt', 'gear'],
         
-        // Other
-        ['.npmrc', 'settings-gear'],
-        ['.nvmrc', 'settings-gear'],
-        ['.python-version', 'settings-gear'],
-        ['.ruby-version', 'settings-gear'],
+        // Python
+        ['requirements.txt', 'package'],
+        ['pipfile', 'package'],
+        ['pipfile.lock', 'lock'],
+        ['pyproject.toml', 'package'],
+        ['setup.py', 'package'],
+        
+        // Ruby
+        ['gemfile', 'package'],
         ['Gemfile', 'package'],
+        ['gemfile.lock', 'lock'],
         ['Gemfile.lock', 'lock'],
+        ['rakefile', 'gear'],
         ['Rakefile', 'gear'],
-        ['Podfile', 'package'],
-        ['Podfile.lock', 'lock'],
+        
+        // PHP
         ['composer.json', 'package'],
         ['composer.lock', 'lock'],
-        ['Cargo.toml', 'package'],
-        ['Cargo.lock', 'lock'],
+        
+        // Rust
+        ['cargo.toml', 'package'],
+        ['cargo.lock', 'lock'],
+        
+        // Go
         ['go.mod', 'package'],
         ['go.sum', 'lock'],
-        ['requirements.txt', 'package'],
-        ['Pipfile', 'package'],
-        ['Pipfile.lock', 'lock'],
-        ['pyproject.toml', 'package'],
+        
+        // iOS
+        ['podfile', 'package'],
+        ['Podfile', 'package'],
+        ['podfile.lock', 'lock'],
+        ['Podfile.lock', 'lock'],
+        
+        // Java
+        ['pom.xml', 'package'],
+        ['build.gradle', 'gear'],
+        ['settings.gradle', 'settings-gear'],
     ]);
 
     /**
      * 获取文件图标
      * @param filePath 文件路径
-     * @param languageId 语言ID（可选）
      * @returns VSCode ThemeIcon
      */
-    public static getFileIcon(filePath: string, languageId?: string): vscode.ThemeIcon {
+    public static getFileIcon(filePath: string): vscode.ThemeIcon {
+        // 尝试使用 ThemeIcon.File API（VSCode 1.92+）
+        // 这个 API 会根据当前文件图标主题返回正确的图标
+        if (this.hasFileIconApi()) {
+            try {
+                const uri = vscode.Uri.file(filePath);
+                return (vscode.ThemeIcon as any).File(uri);
+            } catch {
+                // 如果失败，使用后备方案
+            }
+        }
+        
+        // 后备方案：使用 Codicon 图标映射
         const fileName = path.basename(filePath).toLowerCase();
         const ext = path.extname(filePath).toLowerCase();
         
-        // 1. 首先检查特殊文件名
+        // 1. 检查特殊文件名
         const namedIcon = this.fileNameIconMap.get(fileName);
         if (namedIcon) {
             return new vscode.ThemeIcon(namedIcon);
@@ -333,46 +357,31 @@ export class FileIconMapper {
             return new vscode.ThemeIcon(extIcon);
         }
         
-        // 3. 检查语言ID
-        if (languageId) {
-            const langIcon = this.languageIconMap.get(languageId.toLowerCase());
-            if (langIcon) {
-                return new vscode.ThemeIcon(langIcon);
-            }
-        }
-        
-        // 4. 默认文件图标
+        // 3. 默认文件图标
         return new vscode.ThemeIcon('file');
     }
 
     /**
-     * 获取文件图标名称（用于显示）
+     * 获取文件图标名称（用于调试）
      * @param filePath 文件路径
-     * @param languageId 语言ID（可选）
      * @returns 图标名称字符串
      */
-    public static getFileIconName(filePath: string, languageId?: string): string {
+    public static getFileIconName(filePath: string): string {
+        if (this.hasFileIconApi()) {
+            return 'ThemeIcon.File';
+        }
+        
         const fileName = path.basename(filePath).toLowerCase();
         const ext = path.extname(filePath).toLowerCase();
         
-        // 检查特殊文件名
         const namedIcon = this.fileNameIconMap.get(fileName);
         if (namedIcon) {
             return namedIcon;
         }
         
-        // 检查扩展名
         const extIcon = this.extensionIconMap.get(ext);
         if (extIcon) {
             return extIcon;
-        }
-        
-        // 检查语言ID
-        if (languageId) {
-            const langIcon = this.languageIconMap.get(languageId.toLowerCase());
-            if (langIcon) {
-                return langIcon;
-            }
         }
         
         return 'file';

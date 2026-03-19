@@ -1,0 +1,157 @@
+{
+  "name": "tab-manager",
+  "displayName": "Tab Manager - 标签页管理器",
+  "description": "类似IDEA的标签页管理器，可以快速查看和关闭已打开的标签页，支持批量关闭、多选操作",
+  "version": "1.0.0",
+  "publisher": "your-publisher-name",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Productivity"
+  ],
+  "keywords": [
+    "tab",
+    "manager",
+    "close",
+    "editor",
+    "tabs",
+    "IDEA",
+    "productivity",
+    "batch",
+    "multi-select"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "icon": "resources/icon.png",
+  "galleryBanner": {
+    "color": "#4A90D9",
+    "theme": "light"
+  },
+  "badges": [
+    {
+      "url": "https://github.com/your-username/vscode-tab-manager/workflows/CI/badge.svg",
+      "href": "https://github.com/your-username/vscode-tab-manager/actions",
+      "description": "CI Status"
+    },
+    {
+      "url": "https://img.shields.io/github/v/release/your-username/vscode-tab-manager",
+      "href": "https://github.com/your-username/vscode-tab-manager/releases",
+      "description": "Latest Release"
+    },
+    {
+      "url": "https://img.shields.io/github/license/your-username/vscode-tab-manager",
+      "href": "https://github.com/your-username/vscode-tab-manager/blob/main/LICENSE",
+      "description": "License"
+    }
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "tabManager.showTabs",
+        "title": "显示所有标签页",
+        "icon": "$(list-unordered)"
+      },
+      {
+        "command": "tabManager.closeSelectedTabs",
+        "title": "关闭选中的标签页"
+      },
+      {
+        "command": "tabManager.closeAllExceptActive",
+        "title": "关闭除当前外的所有标签页"
+      },
+      {
+        "command": "tabManager.closeTabsToRight",
+        "title": "关闭右侧所有标签页"
+      },
+      {
+        "command": "tabManager.closeTabsToLeft",
+        "title": "关闭左侧所有标签页"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "tabManager.showTabs",
+          "group": "navigation@100",
+          "when": "editorIsOpen"
+        }
+      ],
+      "editor/title/context": [
+        {
+          "command": "tabManager.closeAllExceptActive",
+          "group": "1_close@10"
+        },
+        {
+          "command": "tabManager.closeTabsToRight",
+          "group": "1_close@20"
+        },
+        {
+          "command": "tabManager.closeTabsToLeft",
+          "group": "1_close@30"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "tabManager.showTabs",
+        "key": "ctrl+alt+t",
+        "mac": "cmd+alt+t"
+      }
+    ],
+    "configuration": {
+      "title": "Tab Manager",
+      "properties": {
+        "tabManager.showPath": {
+          "type": "boolean",
+          "default": true,
+          "description": "是否在标签页列表中显示完整文件路径"
+        },
+        "tabManager.groupByFolder": {
+          "type": "boolean",
+          "default": false,
+          "description": "是否按文件夹分组显示标签页"
+        },
+        "tabManager.maxVisibleItems": {
+          "type": "number",
+          "default": 20,
+          "description": "QuickPick中最多显示的标签页数量"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js",
+    "package": "vsce package --allow-star-activation",
+    "package:preview": "vsce package --allow-star-activation --pre-release",
+    "publish": "vsce publish --allow-star-activation",
+    "publish:preview": "vsce publish --allow-star-activation --pre-release"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.13.0",
+    "@typescript-eslint/parser": "^6.13.0",
+    "eslint": "^8.54.0",
+    "typescript": "^5.3.2",
+    "@vscode/test-electron": "^2.3.8",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/vscode-tab-manager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/vscode-tab-manager/issues"
+  },
+  "homepage": "https://github.com/your-username/vscode-tab-manager#readme",
+  "license": "MIT"
+}

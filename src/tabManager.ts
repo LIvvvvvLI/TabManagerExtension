@@ -11,6 +11,11 @@ export interface TabQuickPickItem extends vscode.QuickPickItem {
 }
 
 /**
+ * 间距类型
+ */
+type ItemSpacing = 'compact' | 'normal' | 'relaxed';
+
+/**
  * 标签页管理器类
  * 实现所有标签页管理功能
  */
@@ -40,12 +45,87 @@ export class TabManager {
     }
 
     /**
+     * 获取配置值
+     */
+    private getShowRelativePath(): boolean {
+        return this.config.get<boolean>('showRelativePath', true);
+    }
+
+    private getShowAbsolutePath(): boolean {
+        return this.config.get<boolean>('showAbsolutePath', false);
+    }
+
+    private getItemSpacing(): ItemSpacing {
+        return this.config.get<ItemSpacing>('itemSpacing', 'normal');
+    }
+
+    /**
+     * 根据间距设置格式化标签
+     */
+    private formatLabelWithSpacing(fileName: string, isActive: boolean, isDirty: boolean): string {
+        const spacing = this.getItemSpacing();
+        
+        // 构建基础标签
+        let label = fileName;
+        
+        // 添加活动标记
+        if (isActive) {
+            label = `✓ ${label}`;
+        }
+        
+        // 添加修改标记
+        if (isDirty) {
+            label = `● ${label}`;
+        }
+        
+        // 根据间距设置添加换行
+        switch (spacing) {
+            case 'compact':
+                // 紧凑：不添加额外间距
+                return label;
+            case 'normal':
+                // 正常：添加一个空行
+                return label;
+            case 'relaxed':
+                // 宽松：添加更多间距（通过在detail中添加空行实现）
+                return label;
+            default:
+                return label;
+        }
+    }
+
+    /**
+     * 格式化详情（绝对路径），根据间距设置调整
+     */
+    private formatDetail(filePath: string, showAbsolutePath: boolean): string | undefined {
+        if (!showAbsolutePath) {
+            return undefined;
+        }
+
+        const spacing = this.getItemSpacing();
+        
+        switch (spacing) {
+            case 'compact':
+                return filePath;
+            case 'normal':
+                return filePath;
+            case 'relaxed':
+                // 宽松模式：在路径前添加空行
+                return `\n${filePath}`;
+            default:
+                return filePath;
+        }
+    }
+
+    /**
      * 获取所有打开的标签页
      * @returns 标签页QuickPick项数组
      */
     public getAllTabs(): TabQuickPickItem[] {
         const items: TabQuickPickItem[] = [];
-        const showPath = this.config.get<boolean>('showPath', true);
+        const showRelativePath = this.getShowRelativePath();
+        const showAbsolutePath = this.getShowAbsolutePath();
+        const spacing = this.getItemSpacing();
 
         vscode.window.tabGroups.all.forEach((group, groupIndex) => {
             group.tabs.forEach((tab, tabIndex) => {
@@ -60,11 +140,12 @@ export class TabManager {
                     // 获取文件图标
                     const fileIcon = FileIconMapper.getFileIcon(uri.fsPath);
                     
-                    // 构建显示标签
-                    let label = fileName;
-                    let description = '';
+                    // 格式化标签（文件名 + 状态标记）
+                    const label = this.formatLabelWithSpacing(fileName, tab.isActive, tab.isDirty);
                     
-                    if (showPath) {
+                    // 格式化描述（相对路径）
+                    let description = '';
+                    if (showRelativePath) {
                         if (workspaceFolder) {
                             const relativePath = path.relative(workspaceFolder.uri.fsPath, dirPath);
                             description = relativePath || '.';
@@ -72,26 +153,18 @@ export class TabManager {
                             description = dirPath;
                         }
                     }
-
-                    // 检查是否为活动标签
-                    if (tab.isActive) {
-                        label = `✓ ${fileName}`;
-                    }
-
-                    // 检查是否已修改
-                    if (tab.isDirty) {
-                        label = `● ${label}`;
-                    }
+                    
+                    // 格式化详情（绝对路径）
+                    const detail = this.formatDetail(filePath, showAbsolutePath);
 
                     items.push({
                         label: label,
                         description: description,
-                        detail: filePath,
+                        detail: detail,
                         iconPath: fileIcon,
                         tab: tab,
                         index: tabIndex,
                         picked: tab.isActive,
-                        // 添加两个按钮：切换和关闭
                         buttons: [
                             this.SWITCH_BUTTON,
                             this.CLOSE_BUTTON

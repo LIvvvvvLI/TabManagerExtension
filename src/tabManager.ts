@@ -193,24 +193,16 @@ export class TabManager {
         const quickPick = vscode.window.createQuickPick<TabQuickPickItem>();
         quickPick.items = items;
         quickPick.canSelectMany = true;
-        quickPick.placeholder = '选择要关闭的标签页（可多选），按Enter关闭选中项';
+        quickPick.placeholder = '选择要关闭的标签页（可多选），按Enter关闭选中项；点击按钮可切换或关闭';
         quickPick.matchOnDescription = true;
         quickPick.matchOnDetail = true;
 
         // 存储选中的项
         let selectedItems: TabQuickPickItem[] = [];
 
+        // 监听选中项变化（点击或 Space 键切换选中状态）
         quickPick.onDidChangeSelection((selection) => {
             selectedItems = selection as TabQuickPickItem[];
-        });
-
-        // 监听当前活动项变化（键盘上下移动时触发）
-        quickPick.onDidChangeActive((activeItems) => {
-            if (activeItems && activeItems.length > 0) {
-                const activeItem = activeItems[0] as TabQuickPickItem;
-                // 切换到对应的标签页
-                this.switchToTab(activeItem);
-            }
         });
 
         // 处理按钮点击

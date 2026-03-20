@@ -7,56 +7,51 @@ export interface TabQuickPickItem extends vscode.QuickPickItem {
 }
 
 export class TabManager {
-    private config: vscode.WorkspaceConfiguration;
-
-    private readonly SWITCH_BUTTON: vscode.QuickInputButton = {
-        iconPath: new vscode.ThemeIcon('arrow-right'),
-        tooltip: '切换到此标签页'
+    // 预定义按钮，避免重复创建
+    private readonly BUTTONS = {
+        SWITCH: {
+            iconPath: new vscode.ThemeIcon('arrow-right'),
+            tooltip: '切换到此标签页'
+        },
+        CLOSE: {
+            iconPath: new vscode.ThemeIcon('close'),
+            tooltip: '关闭此标签页'
+        }
     };
 
-    private readonly CLOSE_BUTTON: vscode.QuickInputButton = {
-        iconPath: new vscode.ThemeIcon('close'),
-        tooltip: '关闭此标签页'
-    };
-
-    constructor() {
-        this.config = vscode.workspace.getConfiguration('tabManager');
-    }
-
+    /**
+     * 获取所有标签页并格式化为 QuickPickItem
+     */
     public getAllTabs(): TabQuickPickItem[] {
-        this.config = vscode.workspace.getConfiguration('tabManager');
-        const showRelativePath = this.config.get<boolean>('showRelativePath', true);
-        const showAbsolutePath = this.config.get<boolean>('showAbsolutePath', false);
+        const config = vscode.workspace.getConfiguration('tabManager');
+        const showRelativePath = config.get<boolean>('showRelativePath', true);
+        const showAbsolutePath = config.get<boolean>('showAbsolutePath', false);
 
         const items: TabQuickPickItem[] = [];
 
         for (const group of vscode.window.tabGroups.all) {
             for (const tab of group.tabs) {
-                let uri: vscode.Uri | undefined;
-                // 更加健壮的 URI 获取方式
-                const input = tab.input as any; 
-                if (input && input.uri instanceof vscode.Uri) {
-                    uri = input.uri;
-                }
+                // 尝试从 input 获取 URI
+                const input = tab.input as any;
+                const uri: vscode.Uri | undefined = input?.uri;
 
                 if (!uri) continue;
 
-                const fileName = tab.label;
                 const isDirty = tab.isDirty;
                 const isActive = tab.isActive;
 
                 /**
-                 * 💡 关键修正点 1：调整 Label 格式
-                 * 建议不要在最前面放特殊符号，或者确保 fileName 保持完整。
-                 * 我们可以利用 description 来显示状态，或者将符号放在后面。
-                 * 如果坚持放在前面，请确保 resourceUri 绝对正确。
+                 * 💡 优化：使用 Markdown 图标 (Octicons)
+                 * $(circle-filled) 是未保存的小圆点
+                 * $(primitive-dot) 或 $(circle-outline) 是活动标记
                  */
-                const stateIcon = isDirty ? ' (未保存)' : '';
-                const activeIcon = isActive ? ' (当前)' : '';
-                
-                // 尝试将状态放在后面，或者保持原样但确保下面的配置生效
-                const label = `${fileName}`;
+                const label = [
+                    isDirty ? '$(circle-filled)' : '',
+                    isActive ? '$(record)' : '',
+                    tab.label
+                ].filter(Boolean).join(' ');
 
+                // 路径处理
                 let description = '';
                 const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
                 if (showRelativePath && workspaceFolder) {
@@ -70,12 +65,11 @@ export class TabManager {
                     description: description || '.',
                     detail: showAbsolutePath ? uri.fsPath : undefined,
                     tab,
-                    // 关键修正：显式指定 resourceUri，但 iconPath 使用这种写法
-                    resourceUri: uri, 
-                    // 强制指定为 'file' 图标 ID，这有时能绕过主题缓存锁死
-                    iconPath: new vscode.ThemeIcon('file'), 
+                    resourceUri: uri,
+                    // 既然放弃文件图标，我们统一使用一个简洁的图标
+                    iconPath: new vscode.ThemeIcon('file-text'), 
                     alwaysShow: isActive,
-                    buttons: [this.SWITCH_BUTTON, this.CLOSE_BUTTON]
+                    buttons: [this.BUTTONS.SWITCH, this.BUTTONS.CLOSE]
                 });
             }
         }
@@ -85,43 +79,42 @@ export class TabManager {
     public async showTabsQuickPick(): Promise<void> {
         const quickPick = vscode.window.createQuickPick<TabQuickPickItem>();
         
-        const refresh = () => {
-            quickPick.items = this.getAllTabs();
-            if (quickPick.items.length === 0) {
+        // 抽取刷新逻辑
+        const update = () => {
+            const items = this.getAllTabs();
+            if (items.length === 0) {
                 quickPick.hide();
+                return;
             }
+            quickPick.items = items;
         };
 
-        refresh();
+        update();
         
-        // 💡 关键修正点 3：这些属性必须在 items 赋值前后保持正确
-        quickPick.placeholder = '搜索已打开的文件...';
+        quickPick.placeholder = '搜索标签页... (Enter 切换，点击按钮操作)';
         quickPick.canSelectMany = false;
         quickPick.matchOnDescription = true;
         quickPick.matchOnDetail = true;
 
+        // 按钮监听
         quickPick.onDidTriggerItemButton(async (e) => {
-            if (e.button === this.SWITCH_BUTTON) {
+            if (e.button === this.BUTTONS.SWITCH) {
                 await this.switchToTab(e.item);
                 quickPick.hide();
-            } else if (e.button === this.CLOSE_BUTTON) {
+            } else if (e.button === this.BUTTONS.CLOSE) {
+                // 直接使用 API 关闭，更快捷
                 await vscode.window.tabGroups.close(e.item.tab);
-                refresh(); 
+                update(); 
             }
         });
 
+        // 确认监听 (Enter)
         quickPick.onDidAccept(async () => {
-            const selected = quickPick.selectedItems;
-            if (selected.length > 0) {
-                await this.closeSelectedTabs(selected);
-                quickPick.hide();
-            } else {
-                const activeItem = quickPick.activeItems[0];
-                if (activeItem) {
-                    await this.switchToTab(activeItem);
-                }
-                quickPick.hide();
+            const selected = quickPick.activeItems[0];
+            if (selected) {
+                await this.switchToTab(selected);
             }
+            quickPick.hide();
         });
 
         quickPick.onDidHide(() => quickPick.dispose());
@@ -129,21 +122,12 @@ export class TabManager {
     }
 
     private async switchToTab(item: TabQuickPickItem) {
-        // 统一使用 open 命令，这样可以自动处理文本和非文本文件
-        if (item.resourceUri) {
-            await vscode.commands.executeCommand('vscode.open', item.resourceUri);
-        }
-    }
-
-    private async closeSelectedTabs(items: readonly TabQuickPickItem[]) {
-        const dirtyItems = items.filter(i => i.tab.isDirty);
-        if (dirtyItems.length > 0) {
-            const result = await vscode.window.showWarningMessage(
-                `确定关闭 ${items.length} 个标签页吗？`,
-                { modal: true }, '确定'
-            );
-            if (result !== '确定') return;
-        }
-        await vscode.window.tabGroups.close(items.map(i => i.tab));
+        if (!item.resourceUri) return;
+        
+        // 使用内置命令打开，支持所有类型的文件（图片、文本等）
+        await vscode.commands.executeCommand('vscode.open', item.resourceUri, {
+            preview: false,
+            preserveFocus: false
+        });
     }
 }

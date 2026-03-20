@@ -18,14 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
-    // 注册关闭选中标签页的命令
-    const closeSelectedTabsCommand = vscode.commands.registerCommand(
-        'tabManager.closeSelectedTabs',
-        async (items: TabQuickPickItem[]) => {
-            await tabManager.closeSelectedTabs(items);
-        }
-    );
-
     // 注册关闭除当前外的所有标签页命令
     const closeAllExceptActiveCommand = vscode.commands.registerCommand(
         'tabManager.closeAllExceptActive',
@@ -53,7 +45,6 @@ export function activate(context: vscode.ExtensionContext) {
     // 添加到订阅列表
     context.subscriptions.push(
         showTabsCommand,
-        closeSelectedTabsCommand,
         closeAllExceptActiveCommand,
         closeTabsToRightCommand,
         closeTabsToLeftCommand

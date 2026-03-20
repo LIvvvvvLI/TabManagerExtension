@@ -18,36 +18,9 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
-    // 注册关闭除当前外的所有标签页命令
-    const closeAllExceptActiveCommand = vscode.commands.registerCommand(
-        'tabManager.closeAllExceptActive',
-        async () => {
-            await tabManager.closeAllExceptActive();
-        }
-    );
-
-    // 注册关闭右侧所有标签页命令
-    const closeTabsToRightCommand = vscode.commands.registerCommand(
-        'tabManager.closeTabsToRight',
-        async () => {
-            await tabManager.closeTabsToRight();
-        }
-    );
-
-    // 注册关闭左侧所有标签页命令
-    const closeTabsToLeftCommand = vscode.commands.registerCommand(
-        'tabManager.closeTabsToLeft',
-        async () => {
-            await tabManager.closeTabsToLeft();
-        }
-    );
-
     // 添加到订阅列表
     context.subscriptions.push(
-        showTabsCommand,
-        closeAllExceptActiveCommand,
-        closeTabsToRightCommand,
-        closeTabsToLeftCommand
+        showTabsCommand
     );
 
     // 显示激活通知

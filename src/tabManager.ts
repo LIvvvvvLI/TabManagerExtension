@@ -17,6 +17,17 @@ export interface TabQuickPickItem extends vscode.QuickPickItem {
 export class TabManager {
     private config: vscode.WorkspaceConfiguration;
 
+    // 定义按钮
+    private readonly SWITCH_BUTTON: vscode.QuickInputButton = {
+        iconPath: new vscode.ThemeIcon('arrow-right'),
+        tooltip: '切换到此标签页'
+    };
+
+    private readonly CLOSE_BUTTON: vscode.QuickInputButton = {
+        iconPath: new vscode.ThemeIcon('close'),
+        tooltip: '关闭此标签页'
+    };
+
     constructor() {
         this.config = vscode.workspace.getConfiguration('tabManager');
     }
@@ -80,16 +91,10 @@ export class TabManager {
                         tab: tab,
                         index: tabIndex,
                         picked: tab.isActive,
-                        // 添加按钮：切换和关闭
+                        // 添加两个按钮：切换和关闭
                         buttons: [
-                            {
-                                iconPath: new vscode.ThemeIcon('arrow-right'),
-                                tooltip: '切换到此标签页'
-                            },
-                            {
-                                iconPath: new vscode.ThemeIcon('close'),
-                                tooltip: '关闭此标签页'
-                            }
+                            this.SWITCH_BUTTON,
+                            this.CLOSE_BUTTON
                         ]
                     });
                 }
@@ -115,7 +120,7 @@ export class TabManager {
         const quickPick = vscode.window.createQuickPick<TabQuickPickItem>();
         quickPick.items = items;
         quickPick.canSelectMany = true;
-        quickPick.placeholder = '选择要关闭的标签页（可多选），按Enter关闭选中项；点击按钮可切换或关闭';
+        quickPick.placeholder = '选择要关闭的标签页（可多选），按Enter关闭选中项';
         quickPick.matchOnDescription = true;
         quickPick.matchOnDetail = true;
 
@@ -126,8 +131,7 @@ export class TabManager {
             selectedItems = selection as TabQuickPickItem[];
         });
 
-        // 监听当前活动项变化（键盘上下移动或鼠标悬停时触发）
-        // 用于预览标签页
+        // 监听当前活动项变化（键盘上下移动时触发）
         quickPick.onDidChangeActive((activeItems) => {
             if (activeItems && activeItems.length > 0) {
                 const activeItem = activeItems[0] as TabQuickPickItem;
@@ -139,14 +143,14 @@ export class TabManager {
         // 处理按钮点击
         quickPick.onDidTriggerItemButton(async (event) => {
             const item = event.item as TabQuickPickItem;
-            const buttonIndex = event.buttonIndex;
-
-            if (buttonIndex === 0) {
-                // 第一个按钮：切换到此标签页
+            
+            // 通过比较按钮对象来区分不同的按钮
+            if (event.button.tooltip === this.SWITCH_BUTTON.tooltip) {
+                // 切换按钮：切换到此标签页并关闭列表
                 await this.switchToTab(item);
                 quickPick.hide();
-            } else if (buttonIndex === 1) {
-                // 第二个按钮：关闭此标签页
+            } else if (event.button.tooltip === this.CLOSE_BUTTON.tooltip) {
+                // 关闭按钮：关闭此标签页
                 await this.closeTab(item);
                 
                 // 刷新列表

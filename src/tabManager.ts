@@ -79,7 +79,18 @@ export class TabManager {
                         iconPath: fileIcon,
                         tab: tab,
                         index: tabIndex,
-                        picked: tab.isActive
+                        picked: tab.isActive,
+                        // 添加按钮：切换和关闭
+                        buttons: [
+                            {
+                                iconPath: new vscode.ThemeIcon('arrow-right'),
+                                tooltip: '切换到此标签页'
+                            },
+                            {
+                                iconPath: new vscode.ThemeIcon('close'),
+                                tooltip: '关闭此标签页'
+                            }
+                        ]
                     });
                 }
             });
@@ -100,16 +111,110 @@ export class TabManager {
             return;
         }
 
-        // 显示QuickPick
-        const selectedItems = await vscode.window.showQuickPick(items, {
-            canPickMany: true,
-            placeHolder: '选择要关闭的标签页（可多选），按Enter关闭选中项',
-            matchOnDescription: true,
-            matchOnDetail: true
+        // 创建QuickPick
+        const quickPick = vscode.window.createQuickPick<TabQuickPickItem>();
+        quickPick.items = items;
+        quickPick.canSelectMany = true;
+        quickPick.placeholder = '选择要关闭的标签页（可多选），按Enter关闭选中项；点击按钮可切换或关闭';
+        quickPick.matchOnDescription = true;
+        quickPick.matchOnDetail = true;
+
+        // 存储选中的项
+        let selectedItems: TabQuickPickItem[] = [];
+
+        quickPick.onDidChangeSelection((selection) => {
+            selectedItems = selection as TabQuickPickItem[];
         });
 
-        if (selectedItems && selectedItems.length > 0) {
-            await this.closeSelectedTabs(selectedItems);
+        // 监听当前活动项变化（键盘上下移动或鼠标悬停时触发）
+        // 用于预览标签页
+        quickPick.onDidChangeActive((activeItems) => {
+            if (activeItems && activeItems.length > 0) {
+                const activeItem = activeItems[0] as TabQuickPickItem;
+                // 切换到对应的标签页
+                this.switchToTab(activeItem);
+            }
+        });
+
+        // 处理按钮点击
+        quickPick.onDidTriggerItemButton(async (event) => {
+            const item = event.item as TabQuickPickItem;
+            const buttonIndex = event.buttonIndex;
+
+            if (buttonIndex === 0) {
+                // 第一个按钮：切换到此标签页
+                await this.switchToTab(item);
+                quickPick.hide();
+            } else if (buttonIndex === 1) {
+                // 第二个按钮：关闭此标签页
+                await this.closeTab(item);
+                
+                // 刷新列表
+                const newItems = this.getAllTabs();
+                if (newItems.length === 0) {
+                    quickPick.hide();
+                    vscode.window.showInformationMessage('所有标签页已关闭');
+                } else {
+                    quickPick.items = newItems;
+                }
+            }
+        });
+
+        // 处理确认选择（关闭选中的标签页）
+        quickPick.onDidAccept(async () => {
+            quickPick.hide();
+            if (selectedItems.length > 0) {
+                await this.closeSelectedTabs(selectedItems);
+            }
+        });
+
+        // 显示QuickPick
+        quickPick.show();
+    }
+
+    /**
+     * 切换到指定标签页
+     * @param item 标签页QuickPick项
+     */
+    public async switchToTab(item: TabQuickPickItem): Promise<void> {
+        try {
+            // 获取标签页对应的 URI
+            if (item.tab.input instanceof vscode.TabInputText) {
+                const uri = item.tab.input.uri;
+                // 打开对应的文档
+                const doc = await vscode.workspace.openTextDocument(uri);
+                await vscode.window.showTextDocument(doc, {
+                    preview: false,
+                    preserveFocus: false
+                });
+            }
+        } catch (error) {
+            console.error('切换标签页失败:', error);
+        }
+    }
+
+    /**
+     * 关闭单个标签页
+     * @param item 标签页QuickPick项
+     */
+    public async closeTab(item: TabQuickPickItem): Promise<void> {
+        try {
+            // 如果有未保存的更改，提示用户
+            if (item.tab.isDirty) {
+                const fileName = path.basename((item.tab.input as vscode.TabInputText).uri.fsPath);
+                const result = await vscode.window.showWarningMessage(
+                    `文件 "${fileName}" 有未保存的更改，确定要关闭吗？`,
+                    '关闭',
+                    '取消'
+                );
+                if (result !== '关闭') {
+                    return;
+                }
+            }
+            // 使用 vscode.window.tabGroups.close() 关闭标签页
+            await vscode.window.tabGroups.close(item.tab);
+        } catch (error) {
+            console.error('关闭标签页失败:', error);
         }
     }
 

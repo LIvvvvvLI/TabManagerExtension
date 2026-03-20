@@ -75,7 +75,7 @@ export class TabManager {
                      * 确保它是完整的 Uri 对象。
                      */
                     resourceUri: uri,
-                    iconPath: vscode.ThemeIcon.File, 
+                    // iconPath: vscode.ThemeIcon.File, 
                     alwaysShow: isActive,
                     buttons: [this.SWITCH_BUTTON, this.CLOSE_BUTTON]
                 });

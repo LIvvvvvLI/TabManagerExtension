@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { TabQuickPickItem, TabManager } from './tabManager';
+import { TabManager } from './tabManager';
 
 /**
  * 扩展激活时调用
@@ -13,15 +13,11 @@ export function activate(context: vscode.ExtensionContext) {
     // 注册显示所有标签页的命令
     const showTabsCommand = vscode.commands.registerCommand(
         'tabManager.showTabs',
-        async () => {
-            await tabManager.showTabsQuickPick();
-        }
+        () => tabManager.showTabsQuickPick()
     );
 
-    // 添加到订阅列表
-    context.subscriptions.push(
-        showTabsCommand
-    );
+    // 添加到订阅列表，这样在插件卸载时，VS Code 会自动清理这些资源，防止内存泄漏
+    context.subscriptions.push(showTabsCommand);
 
     // 显示激活通知
     vscode.window.showInformationMessage('Tab Manager 标签页管理器已就绪！');

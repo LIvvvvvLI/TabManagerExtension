@@ -96,7 +96,7 @@ export class TabManager {
         
         // 💡 关键修正点 3：这些属性必须在 items 赋值前后保持正确
         quickPick.placeholder = '搜索已打开的文件...';
-        quickPick.canSelectMany = true;
+        quickPick.canSelectMany = false;
         quickPick.matchOnDescription = true;
         quickPick.matchOnDetail = true;
 

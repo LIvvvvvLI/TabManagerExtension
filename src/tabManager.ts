@@ -70,12 +70,10 @@ export class TabManager {
                     description: description || '.',
                     detail: showAbsolutePath ? uri.fsPath : undefined,
                     tab,
-                    /**
-                     * 💡 关键修正点 2：resourceUri 的赋值
-                     * 确保它是完整的 Uri 对象。
-                     */
-                    resourceUri: uri,
-                    // iconPath: vscode.ThemeIcon.File, 
+                    // 关键修正：显式指定 resourceUri，但 iconPath 使用这种写法
+                    resourceUri: uri, 
+                    // 强制指定为 'file' 图标 ID，这有时能绕过主题缓存锁死
+                    iconPath: new vscode.ThemeIcon('file'), 
                     alwaysShow: isActive,
                     buttons: [this.SWITCH_BUTTON, this.CLOSE_BUTTON]
                 });

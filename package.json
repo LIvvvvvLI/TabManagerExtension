@@ -31,23 +31,6 @@
     "color": "#4A90D9",
     "theme": "light"
   },
-  "badges": [
-    {
-      "url": "https://github.com/your-username/vscode-tab-manager/workflows/CI/badge.svg",
-      "href": "https://github.com/your-username/vscode-tab-manager/actions",
-      "description": "CI Status"
-    },
-    {
-      "url": "https://img.shields.io/github/v/release/your-username/vscode-tab-manager",
-      "href": "https://github.com/your-username/vscode-tab-manager/releases",
-      "description": "Latest Release"
-    },
-    {
-      "url": "https://img.shields.io/github/license/your-username/vscode-tab-manager",
-      "href": "https://github.com/your-username/vscode-tab-manager/blob/main/LICENSE",
-      "description": "License"
-    }
-  ],
   "contributes": {
     "commands": [
       {
@@ -105,10 +88,26 @@
     "configuration": {
       "title": "Tab Manager",
       "properties": {
-        "tabManager.showPath": {
+        "tabManager.showRelativePath": {
           "type": "boolean",
           "default": true,
-          "description": "是否在标签页列表中显示完整文件路径"
+          "description": "是否在标签页列表中显示相对路径（显示在文件名右侧）"
+        },
+        "tabManager.showAbsolutePath": {
+          "type": "boolean",
+          "default": false,
+          "description": "是否在标签页列表中显示绝对路径（显示在文件名下方）"
+        },
+        "tabManager.itemSpacing": {
+          "type": "string",
+          "enum": ["compact", "normal", "relaxed"],
+          "enumDescriptions": [
+            "紧凑间距",
+            "正常间距",
+            "宽松间距"
+          ],
+          "default": "normal",
+          "description": "列表中标签页之间的间距"
         },
         "tabManager.groupByFolder": {
           "type": "boolean",
@@ -130,10 +129,7 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",
-    "package": "vsce package --allow-star-activation",
-    "package:preview": "vsce package --allow-star-activation --pre-release",
-    "publish": "vsce publish --allow-star-activation",
-    "publish:preview": "vsce publish --allow-star-activation --pre-release"
+    "package": "vsce package --allow-star-activation"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",

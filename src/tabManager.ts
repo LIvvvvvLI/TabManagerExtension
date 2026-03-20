@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { FileIconMapper } from './fileIconMapper';
 
 /**
  * QuickPick项接口，用于显示标签页信息
@@ -8,6 +7,7 @@ import { FileIconMapper } from './fileIconMapper';
 export interface TabQuickPickItem extends vscode.QuickPickItem {
     tab: vscode.Tab;
     index: number;
+    resourceUri?: vscode.Uri;
 }
 
 /**
@@ -63,8 +63,6 @@ export class TabManager {
      * 根据间距设置格式化标签
      */
     private formatLabelWithSpacing(fileName: string, isActive: boolean, isDirty: boolean): string {
-        const spacing = this.getItemSpacing();
-        
         // 构建基础标签
         let label = fileName;
         
@@ -78,20 +76,7 @@ export class TabManager {
             label = `● ${label}`;
         }
         
-        // 根据间距设置添加换行
-        switch (spacing) {
-            case 'compact':
-                // 紧凑：不添加额外间距
-                return label;
-            case 'normal':
-                // 正常：添加一个空行
-                return label;
-            case 'relaxed':
-                // 宽松：添加更多间距（通过在detail中添加空行实现）
-                return label;
-            default:
-                return label;
-        }
+        return label;
     }
 
     /**
@@ -106,7 +91,6 @@ export class TabManager {
         
         switch (spacing) {
             case 'compact':
-                return filePath;
             case 'normal':
                 return filePath;
             case 'relaxed':
@@ -125,7 +109,6 @@ export class TabManager {
         const items: TabQuickPickItem[] = [];
         const showRelativePath = this.getShowRelativePath();
         const showAbsolutePath = this.getShowAbsolutePath();
-        const spacing = this.getItemSpacing();
 
         vscode.window.tabGroups.all.forEach((group, groupIndex) => {
             group.tabs.forEach((tab, tabIndex) => {
@@ -136,9 +119,6 @@ export class TabManager {
                     const filePath = uri.fsPath;
                     const dirPath = path.dirname(uri.fsPath);
                     const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);
-                    
-                    // 获取文件图标
-                    const fileIcon = FileIconMapper.getFileIcon(uri.fsPath);
                     
                     // 格式化标签（文件名 + 状态标记）
                     const label = this.formatLabelWithSpacing(fileName, tab.isActive, tab.isDirty);
@@ -161,7 +141,10 @@ export class TabManager {
                         label: label,
                         description: description,
                         detail: detail,
-                        iconPath: fileIcon,
+                        // 关键：使用 ThemeIcon.File 作为图标占位符
+                        iconPath: vscode.ThemeIcon.File,
+                        // 关键：提供 resourceUri，VSCode 会根据文件后缀自动渲染正确的图标
+                        resourceUri: uri,
                         tab: tab,
                         index: tabIndex,
                         picked: tab.isActive,
@@ -236,6 +219,9 @@ export class TabManager {
                 await this.closeSelectedTabs(selectedItems);
             }
         });
+
+        // 隐藏时销毁实例释放内存
+        quickPick.onDidHide(() => quickPick.dispose());
 
         // 显示QuickPick
         quickPick.show();

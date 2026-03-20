@@ -55,7 +55,7 @@ export class TabManager {
                 const activeIcon = isActive ? ' (当前)' : '';
                 
                 // 尝试将状态放在后面，或者保持原样但确保下面的配置生效
-                const label = `${fileName}${stateIcon}${activeIcon}`;
+                const label = `${fileName}`;
 
                 let description = '';
                 const workspaceFolder = vscode.workspace.getWorkspaceFolder(uri);

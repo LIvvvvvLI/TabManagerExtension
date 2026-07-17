@@ -1,112 +1,76 @@
-# VSCode Tab Manager 插件安装指南
+# Tab Manager 安装与服务器分发指南
 
-## 快速安装
+## 获取 VSIX
 
-### 方法一：直接安装（推荐）
+本项目不要求在本地安装依赖、编译、测试、打包或部署。可安装的 VSIX 统一由服务器工作流生成。
 
-1. 打开终端，进入插件目录：
-   ```bash
-   cd /home/z/my-project/download/vscode-tab-manager
-   ```
+1. 打开代码托管平台的 Actions/工作流页面。
+2. 选择 `Build Extension Artifact`。
+3. 手动运行工作流；仅需要安装包时保持 `create_release` 为关闭状态。
+4. 工作流完成后下载 `tab-manager-extension` Artifact。
+5. 解压压缩包，得到名称形如 `tab-manager-<version>.vsix` 的文件。
 
-2. 安装依赖：
-   ```bash
-   npm install
-   ```
+Artifact 默认保留 30 天。
 
-3. 编译 TypeScript：
-   ```bash
-   npm run compile
-   ```
+## 安装 VSIX
 
-4. 打包扩展：
-   ```bash
-   npm run package
-   ```
-   > 如果提示找不到 vsce 命令，请先全局安装：
-   > ```bash
-   > npm install -g @vscode/vsce
-   > ```
+### 从 VS Code 安装
 
-5. 在 VSCode 中安装：
-   - 按 `Ctrl/Cmd + Shift + P` 打开命令面板
-   - 输入 "Install from VSIX"
-   - 选择生成的 `.vsix` 文件
+1. 打开命令面板：`Ctrl/Cmd+Shift+P`。
+2. 执行 `Extensions: Install from VSIX...`。
+3. 选择下载并解压后的 `.vsix` 文件。
+4. 按提示重新加载 VS Code。
 
-### 方法二：开发模式调试
+### 从命令行安装
 
-1. 在 VSCode 中打开插件目录：
-   ```bash
-   code /home/z/my-project/download/vscode-tab-manager
-   ```
+```bash
+code --install-extension <extension-file>.vsix
+```
 
-2. 按 `F5` 启动调试，会打开一个新的 VSCode 窗口
+## 创建草稿 Release
 
-3. 在新窗口中测试插件功能
+维护者可以在手动运行服务器工作流时启用 `create_release`。工作流会：
 
-## 使用方法
+1. 生成版本化 VSIX。
+2. 上传工作流 Artifact。
+3. 创建以清单版本号命名的草稿 Release。
+4. 把 VSIX 附加到草稿 Release。
 
-### 打开标签页管理器
+草稿不会自动公开。维护者应检查版本号、更新日志和安装包后，再在代码托管平台上手动发布。
 
-有三种方式：
+发布者、仓库地址、主页及问题反馈地址均使用占位符；真实信息只应在受控的私有发布环境中配置。
 
-1. **点击按钮**：在编辑器标签栏右侧点击列表图标
-2. **快捷键**：`Ctrl + Alt + T` (Windows/Linux) 或 `Cmd + Alt + T` (macOS)
-3. **命令面板**：按 `Ctrl/Cmd + Shift + P`，输入 "显示所有标签页"
+## 使用
 
-### 操作标签页
+- 点击编辑器标题栏右侧的列表图标。
+- Windows/Linux 使用 `Ctrl+Alt+T`，macOS 使用 `Cmd+Alt+T`。
+- 也可以从命令面板执行“显示所有标签页”。
 
-- **选择标签页**：点击选择，支持多选
-- **关闭单个**：点击标签页右侧的 × 按钮
-- **批量关闭**：选择多个后按 Enter
+在列表中可以搜索、切换、单项关闭，或勾选多个标签页后按 `Enter` 批量关闭。
 
-### 右键菜单功能
-
-在编辑器标签页上右键可以：
-- 关闭除当前外的所有标签页
-- 关闭右侧所有标签页
-- 关闭左侧所有标签页
-
-## 配置选项
-
-在 VSCode 设置中搜索 "Tab Manager"：
+## 配置
 
 ```json
 {
-    "tabManager.showPath": true,      // 显示文件路径
-    "tabManager.groupByFolder": false, // 按文件夹分组
-    "tabManager.maxVisibleItems": 20   // 最大显示数量
+  "tabManager.showRelativePath": true,
+  "tabManager.showAbsolutePath": false
 }
-```
-
-## 项目结构
-
-```
-vscode-tab-manager/
-├── src/
-│   ├── extension.ts      # 扩展入口
-│   ├── tabManager.ts     # 核心功能实现
-│   └── test/             # 测试文件
-├── resources/
-│   └── icon.svg          # 扩展图标
-├── package.json          # 扩展配置
-├── tsconfig.json         # TypeScript 配置
-└── README.md             # 说明文档
 ```
 
 ## 常见问题
 
-### Q: 安装后看不到按钮？
+### 安装后看不到标题栏按钮
 
-A: 请确保：
-1. 扩展已正确安装并启用
-2. 至少打开了一个编辑器文件
-3. 尝试重启 VSCode
+确认扩展已启用并至少打开了一个编辑器标签页，也可以直接从命令面板执行“显示所有标签页”。
 
-### Q: 快捷键不生效？
+### 快捷键没有响应
 
-A: 检查是否有其他扩展占用了相同的快捷键，可以在 VSCode 快捷键设置中修改。
+在 VS Code 键盘快捷方式设置中检查是否有其他命令占用了相同组合键。
 
-### Q: 如何卸载？
+### Webview 或终端没有切换按钮
 
-A: 在 VSCode 扩展面板中找到 "Tab Manager"，点击卸载即可。
+VS Code 公共扩展 API 没有提供这两类编辑器标签的可恢复资源句柄。它们仍支持在列表中查看和关闭。
+
+### 如何卸载
+
+在扩展面板中找到 Tab Manager，选择卸载并按提示重新加载窗口。

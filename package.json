@@ -1,7 +1,7 @@
 {
   "name": "tab-manager",
   "displayName": "Tab Manager - 标签页管理器",
-  "description": "类似IDEA的标签页管理器，可以快速查看和关闭已打开的标签页，支持批量关闭、多选操作，显示文件类型图标",
+  "description": "集中查看、搜索、切换和批量关闭 VS Code 标签页，并显示标签类型与路径信息",
   "version": "2.0.0",
   "publisher": "your-publisher-name",
   "engines": {
@@ -21,9 +21,6 @@
     "productivity",
     "batch",
     "multi-select"
-  ],
-  "activationEvents": [
-    "onStartupFinished"
   ],
   "main": "./out/extension.js",
   "icon": "resources/icon.png",
@@ -67,27 +64,6 @@
           "type": "boolean",
           "default": false,
           "description": "是否在标签页列表中显示绝对路径（显示在文件名下方）"
-        },
-        "tabManager.itemSpacing": {
-          "type": "string",
-          "enum": ["compact", "normal", "relaxed"],
-          "enumDescriptions": [
-            "紧凑间距",
-            "正常间距",
-            "宽松间距"
-          ],
-          "default": "normal",
-          "description": "列表中标签页之间的间距"
-        },
-        "tabManager.groupByFolder": {
-          "type": "boolean",
-          "default": false,
-          "description": "是否按文件夹分组显示标签页"
-        },
-        "tabManager.maxVisibleItems": {
-          "type": "number",
-          "default": 20,
-          "description": "QuickPick中最多显示的标签页数量"
         }
       }
     }
@@ -95,16 +71,12 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "test": "node ./out/test/runTest.js",
-    "package": "vsce package --allow-star-activation"
+    "package": "vsce package"
   },
   "devDependencies": {
     "@types/node": "^20.10.0",
     "@types/vscode": "^1.92.0",
     "typescript": "^5.3.2",
-    "@vscode/test-electron": "^2.3.8",
     "@vscode/vsce": "^2.22.0"
   },
   "repository": {

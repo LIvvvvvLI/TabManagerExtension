@@ -1,0 +1,11 @@
+.github/**
+.gitignore
+.vscodeignore
+src/**
+tsconfig.json
+package-lock.json
+CONTRIBUTING.md
+INSTALL.md
+**/*.map
+resources/icon.svg
+*.vsix

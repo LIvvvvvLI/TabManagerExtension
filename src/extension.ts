@@ -18,9 +18,6 @@ export function activate(context: vscode.ExtensionContext) {
 
     // 添加到订阅列表，这样在插件卸载时，VS Code 会自动清理这些资源，防止内存泄漏
     context.subscriptions.push(showTabsCommand);
-
-    // 显示激活通知
-    vscode.window.showInformationMessage('Tab Manager 标签页管理器已就绪！');
 }
 
 /**

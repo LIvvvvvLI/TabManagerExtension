@@ -1,38 +1,43 @@
 # Change Log
 
-All notable changes to the "Tab Manager" extension will be documented in this file.
+All notable changes to Tab Manager are documented in this file.
+
+## [Unreleased]
+
+### Added
+
+- Support listing text, text diff, custom editor, notebook, notebook diff, webview, terminal, and unknown editor tabs.
+- Type-specific tab icons and URI-aware path display.
+- Live QuickPick updates when tabs, editor groups, or Tab Manager settings change.
+- User-facing error messages for failed switch and close operations.
+- Server workflow option for creating a draft release with the generated VSIX.
+
+### Changed
+
+- Preserve the original editor group and preview state when switching supported resource tabs.
+- Activate the extension only when its contributed command is invoked.
+- Keep selected and focused QuickPick items when the list refreshes.
+- Keep the QuickPick open when an unsaved-file confirmation is cancelled.
+- Align public documentation with the implemented feature set and server-only distribution flow.
+
+### Removed
+
+- Startup-ready notification.
+- Inactive settings for item spacing, folder grouping, and maximum visible items.
+- Obsolete local build, test, and deployment instructions.
 
 ## [2.0.0] - 2024-03-19
 
 ### Added
 
-- **File Type Icons**: Display file type icons for each tab based on file extension
-  - Support for 100+ file types including JavaScript, TypeScript, Python, Java, Go, Rust, etc.
-  - Special icons for config files (package.json, tsconfig.json, .env, etc.)
-  - Icons for documentation files (README, LICENSE, CHANGELOG)
-  - Icons for media files (images, audio, video)
-  - Icons for archive files (zip, tar, gz)
-  - Icons for database files (sql, prisma)
-- New `fileIconMapper.ts` module for comprehensive file icon mapping
-- Improved visual appearance with consistent icon display
-
-### Changed
-
-- Enhanced QuickPick UI with file icons
-- Better file type recognition
+- Searchable QuickPick list for open resource tabs.
+- Single-tab switching and closing actions.
+- Multi-select batch closing with unsaved-file confirmation.
+- Relative and absolute path display preferences.
+- Editor title action and `Ctrl/Cmd+Alt+T` shortcut.
 
 ## [1.0.0] - 2024-01-01
 
 ### Added
 
-- Initial release
-- Show all open tabs in a QuickPick list
-- Multi-select tabs for batch closing
-- Close button on each tab item
-- Close all tabs except active
-- Close tabs to the right
-- Close tabs to the left
-- Editor title bar button
-- Keyboard shortcut (Ctrl/Cmd + Alt + T)
-- Configuration options for display preferences
-- Support for unsaved file warnings
+- Initial Tab Manager extension structure and command.

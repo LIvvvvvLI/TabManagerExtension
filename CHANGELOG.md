@@ -7,7 +7,9 @@ All notable changes to Tab Manager are documented in this file.
 ### Added
 
 - Support listing text, text diff, custom editor, notebook, notebook diff, webview, terminal, and unknown editor tabs.
-- Type-specific tab icons and URI-aware path display.
+- File icon theme integration on VS Code 1.108 and newer.
+- File name and extension category icons as a fallback on VS Code 1.92–1.107.
+- URI-aware path display.
 - Live QuickPick updates when tabs, editor groups, or Tab Manager settings change.
 - User-facing error messages for failed switch and close operations.
 - Server workflow option for creating a draft release with the generated VSIX.

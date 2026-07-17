@@ -1,9 +1,11 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
+import { FileIconMapper } from './fileIconMapper';
 
 export interface TabQuickPickItem extends vscode.QuickPickItem {
     tab: vscode.Tab;
     canSwitch: boolean;
+    resourceUri?: vscode.Uri;
 }
 
 interface TabPresentation {
@@ -11,6 +13,7 @@ interface TabPresentation {
     detail?: string;
     iconPath: vscode.ThemeIcon;
     canSwitch: boolean;
+    resourceUri?: vscode.Uri;
 }
 
 export class TabManager {
@@ -24,6 +27,7 @@ export class TabManager {
             tooltip: '关闭此标签页'
         }
     };
+    private readonly themeFileIcon = this.resolveThemeFileIcon();
 
     public getAllTabs(): TabQuickPickItem[] {
         const config = vscode.workspace.getConfiguration('tabManager');
@@ -36,6 +40,7 @@ export class TabManager {
             for (const tab of group.tabs) {
                 const presentation = this.getTabPresentation(
                     tab.input,
+                    tab.label,
                     showRelativePath,
                     showAbsolutePath
                 );
@@ -52,6 +57,7 @@ export class TabManager {
                     tab,
                     canSwitch: presentation.canSwitch,
                     iconPath: presentation.iconPath,
+                    resourceUri: presentation.resourceUri,
                     alwaysShow: tab.isActive,
                     buttons: presentation.canSwitch
                         ? [this.BUTTONS.SWITCH, this.BUTTONS.CLOSE]
@@ -64,13 +70,14 @@ export class TabManager {
 
     private getTabPresentation(
         input: unknown,
+        tabLabel: string,
         showRelativePath: boolean,
         showAbsolutePath: boolean
     ): TabPresentation {
         if (input instanceof vscode.TabInputText) {
             return this.createResourcePresentation(
                 input.uri,
-                'file',
+                tabLabel,
                 showRelativePath,
                 showAbsolutePath
             );
@@ -79,7 +86,7 @@ export class TabManager {
         if (input instanceof vscode.TabInputTextDiff) {
             return this.createResourcePresentation(
                 input.modified,
-                'diff',
+                tabLabel,
                 showRelativePath,
                 showAbsolutePath,
                 showAbsolutePath
@@ -91,7 +98,7 @@ export class TabManager {
         if (input instanceof vscode.TabInputCustom) {
             return this.createResourcePresentation(
                 input.uri,
-                'preview',
+                tabLabel,
                 showRelativePath,
                 showAbsolutePath
             );
@@ -100,7 +107,7 @@ export class TabManager {
         if (input instanceof vscode.TabInputNotebook) {
             return this.createResourcePresentation(
                 input.uri,
-                'notebook',
+                tabLabel,
                 showRelativePath,
                 showAbsolutePath
             );
@@ -109,7 +116,7 @@ export class TabManager {
         if (input instanceof vscode.TabInputNotebookDiff) {
             return this.createResourcePresentation(
                 input.modified,
-                'diff',
+                tabLabel,
                 showRelativePath,
                 showAbsolutePath,
                 showAbsolutePath
@@ -143,7 +150,7 @@ export class TabManager {
 
     private createResourcePresentation(
         uri: vscode.Uri,
-        icon: string,
+        tabLabel: string,
         showRelativePath: boolean,
         showAbsolutePath: boolean,
         detail?: string
@@ -151,9 +158,22 @@ export class TabManager {
         return {
             description: this.getResourceDescription(uri, showRelativePath),
             detail: detail ?? (showAbsolutePath ? this.formatUri(uri) : undefined),
-            iconPath: new vscode.ThemeIcon(icon),
-            canSwitch: true
+            iconPath: this.themeFileIcon ?? FileIconMapper.getIcon(uri, tabLabel),
+            canSwitch: true,
+            resourceUri: this.themeFileIcon ? uri : undefined
         };
+    }
+
+    private resolveThemeFileIcon(): vscode.ThemeIcon | undefined {
+        const [major, minor] = vscode.version.split('.').map(Number);
+        if (major < 1 || (major === 1 && minor < 108)) {
+            return undefined;
+        }
+
+        const themeIcon = vscode.ThemeIcon as typeof vscode.ThemeIcon & {
+            File?: vscode.ThemeIcon;
+        };
+        return themeIcon.File;
     }
 
     private getResourceDescription(
